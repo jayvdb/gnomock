@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"os"
 	"regexp"
@@ -111,11 +112,13 @@ func (d *docker) pullImage(ctx context.Context, image string, cfg *Options) erro
 
 func (d *docker) startContainer(ctx context.Context, image string, ports NamedPorts, cfg *Options) (*Container, error) {
 	d.log.Info("starting container")
+	log.Println("starting container")
 
 	resp, err := d.prepareContainer(ctx, image, ports, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("can't prepare container: %w", err)
 	}
+	log.Println("prepared container")
 
 	sidecarChan := make(chan string)
 
@@ -153,6 +156,7 @@ func (d *docker) startContainer(ctx context.Context, image string, ports NamedPo
 		return nil, fmt.Errorf("can't start container %s: %w", resp.ID, err)
 	}
 
+	log.Println("started container")
 	container, err := d.waitForContainerNetwork(ctx, resp.ID, ports)
 	if err != nil {
 		return nil, fmt.Errorf("container network isn't ready: %w", err)
@@ -162,6 +166,7 @@ func (d *docker) startContainer(ctx context.Context, image string, ports NamedPo
 		container.ID = generateID(container.ID, sidecar)
 	}
 
+	log.Println("container started 2")
 	d.log.Infow("container started", "container", container)
 
 	return container, nil

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,9 +19,11 @@ func startHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		name := vars["name"]
+		log.Println("startHandler start request:", name)
 		p := registry.Find(name)
 
 		if p == nil {
+			log.Println("registry didnt find:", name)
 			respondWithError(w, errors.NewPresetNotFoundError(name))
 			return
 		}
@@ -30,6 +33,7 @@ func startHandler() http.HandlerFunc {
 
 		err := decoder.Decode(&sr)
 		if err != nil {
+			log.Println("couldnt decode body")
 			respondWithError(w, errors.NewInvalidStartRequestError(err))
 			return
 		}
@@ -37,6 +41,7 @@ func startHandler() http.HandlerFunc {
 		started := make(chan bool)
 		logWriter, allLogs := setupLogWriter(started)
 
+		log.Println("startHandler starting:", name)
 		c, err := gnomock.Start(
 			p,
 			gnomock.WithOptions(&sr.Options),
@@ -44,10 +49,13 @@ func startHandler() http.HandlerFunc {
 			gnomock.WithContext(r.Context()),
 		)
 
+		log.Println("startHandler started", name, c, err)
+
 		close(started)
 
 		if err != nil {
 			err = fmt.Errorf("%s: %w", strings.Join(<-allLogs, ";"), err)
+			log.Println(err)
 			respondWithError(w, errors.NewStartFailedError(err, c))
 
 			return

@@ -3,6 +3,8 @@ package gnomockd
 
 import (
 	"encoding/json"
+	"fmt"
+	"html"
 	"log"
 	"net/http"
 
@@ -12,9 +14,15 @@ import (
 
 // Handler returns an HTTP handler ready to serve incoming connections.
 func Handler() http.Handler {
+	log.Println("Creating http handler...")
 	router := mux.NewRouter()
 	router.HandleFunc("/start/{name}", startHandler()).Methods(http.MethodPost)
 	router.HandleFunc("/stop", stopHandler()).Methods(http.MethodPost)
+	router.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	})
+
+	log.Println("Returning http handler...")
 
 	return router
 }

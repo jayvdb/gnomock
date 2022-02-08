@@ -1,6 +1,10 @@
 package gnomock
 
-import "golang.org/x/sync/errgroup"
+import (
+	"log"
+
+	"golang.org/x/sync/errgroup"
+)
 
 // InParallel begins parallel preset execution setup. Use Start to add more
 // presets with their configuration to parallel execution, and Go() in the end
@@ -23,7 +27,9 @@ type Parallel struct {
 // Start adds the provided preset with its configuration to the parallel
 // execution kicked-off by Go(), together with other added presets.
 func (b *Parallel) Start(p Preset, opts ...Option) *Parallel {
-	b.presets = append(b.presets, configuredPreset{p, opts})
+	preset := configuredPreset{p, opts}
+	log.Println("Start adding preset")
+	b.presets = append(b.presets, preset)
 
 	return b
 }

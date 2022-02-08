@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -79,7 +80,9 @@ type g struct {
 // available through Option functions. The returned container must be stopped
 // when no longer needed using its Stop() method.
 func StartCustom(image string, ports NamedPorts, opts ...Option) (c *Container, err error) {
+	log.Println("StartCustom..")
 	config, image := buildConfig(opts...), buildImage(image)
+	log.Println("StartCustom config", config)
 
 	g, err := newG(config.Debug)
 	if err != nil {
@@ -88,21 +91,26 @@ func StartCustom(image string, ports NamedPorts, opts ...Option) (c *Container, 
 
 	defer func() { _ = g.log.Sync() }()
 
+	log.Println("starting", "image", image, "ports", ports)
 	g.log.Infow("starting", "image", image, "ports", ports)
+	log.Println("using config", "image", image, "ports", ports, "config", config)
 	g.log.Infow("using config", "image", image, "ports", ports, "config", config)
 
 	ctx, cancel := context.WithTimeout(config.ctx, config.Timeout)
 	defer cancel()
 
+	log.Println("dockerConnect..")
 	cli, err := g.dockerConnect()
 	if err != nil {
 		return nil, fmt.Errorf("can't create docker client: %w", err)
 	}
 
+	log.Println("startContainer..")
 	c, err = cli.startContainer(ctx, image, ports, config)
 	if err != nil {
 		return nil, fmt.Errorf("can't start container: %w", err)
 	}
+	log.Println("started Container..")
 
 	defer func() {
 		if err != nil {
@@ -178,6 +186,7 @@ func Start(p Preset, opts ...Option) (*Container, error) {
 	mergedOpts = append(mergedOpts, presetOpts...)
 	mergedOpts = append(mergedOpts, opts...)
 
+	log.Println("Start", p)
 	return StartCustom(p.Image(), p.Ports(), mergedOpts...)
 }
 
