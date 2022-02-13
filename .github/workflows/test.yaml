@@ -7,18 +7,10 @@ on:
   pull_request:
 jobs:
 
-  test-github-action:
+  test-github-action-broken:
     name: "github action with run-on-arch-action (not working)"
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v1
-      - name: Install Task
-        uses: arduino/setup-task@v1
-        with:
-          version: '3.0.0'
-      # name: Build orlangure/gnomock image
-      # run: task gnomock:build:server
       - name: Start Gnomock server
         uses: gnomock/github-action@master
       - name: Test Gnomock connection
@@ -26,7 +18,7 @@ jobs:
       - name: Test Gnomock started service connection
         run: nc -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
       - uses: uraimo/run-on-arch-action@v2.1.1
-        name: Run commands
+        name: Test on armv7
         id: runcmd
         with:
           arch: armv7
@@ -80,3 +72,23 @@ jobs:
           apt-get install -y curl jq netcat-openbsd
           curl gnomock:23042/start/mongo -d '{}'
           nc -vvv -z gnomock $(curl gnomock:23042/start/mongo -d '{}' | jq .ports.default.port)
+
+  test-github-action-with-docker-run:
+    name: "github action with docker run"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Gnomock server
+        uses: gnomock/github-action@master
+      - name: Test Gnomock connection
+        run: curl 127.0.0.1:23042/start/mongo -d '{}'
+      - name: Test Gnomock started service connection
+        run: nc -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
+      - name: Test in docker run
+        id: runcmd
+        run: |
+          docker run --volume /var/run/docker.sock:/var/run/docker.sock debian:bullseye bash -c '
+            apt-get update -q -y
+            apt-get install -y curl jq netcat-openbsd
+            curl 127.0.0.1:23042/start/mongo -d "{}"
+            nc -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d "{}" | jq .ports.default.port)
+            '
