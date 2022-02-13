@@ -8,7 +8,7 @@ on:
 jobs:
 
   test-github-action:
-    name: "[core] github action"
+    name: "github action with run-on-arch-action (not working)"
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
@@ -46,7 +46,7 @@ jobs:
             nc -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
 
   test-github-action-with-services:
-    name: "[core] github action services"
+    name: "github action services"
     runs-on: ubuntu-latest
     services:
       gnomock:
@@ -63,7 +63,7 @@ jobs:
           nc -vvv -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
 
   test-github-action-in-container:
-    name: "[core] github action in container"
+    name: "github action in container"
     runs-on: ubuntu-latest
     container:
       image: debian:bullseye
