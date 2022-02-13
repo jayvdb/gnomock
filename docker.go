@@ -112,13 +112,14 @@ func (d *docker) pullImage(ctx context.Context, image string, cfg *Options) erro
 
 func (d *docker) startContainer(ctx context.Context, image string, ports NamedPorts, cfg *Options) (*Container, error) {
 	d.log.Info("starting container")
-	log.Println("starting container")
+	log.Println("starting container with ports", ports)
 
 	resp, err := d.prepareContainer(ctx, image, ports, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("can't prepare container: %w", err)
 	}
-	log.Println("prepared container")
+	log.Println("prepared container without auto cleanup")
+	cfg.DisableAutoCleanup = true
 
 	sidecarChan := make(chan string)
 
@@ -252,6 +253,8 @@ func (d *docker) exposedPorts(namedPorts NamedPorts) nat.PortSet {
 }
 
 func (d *docker) portBindings(exposedPorts nat.PortSet, ports NamedPorts) nat.PortMap {
+	log.Println("portBindings() exposedPorts", exposedPorts)
+	log.Println("portBindings() ports", ports)
 	portBindings := make(nat.PortMap)
 
 	// for the container to be accessible from another container, it cannot
@@ -276,12 +279,15 @@ func (d *docker) portBindings(exposedPorts nat.PortSet, ports NamedPorts) nat.Po
 
 		portBindings[port] = []nat.PortBinding{binding}
 	}
+	log.Println("portBindings() portBindings", portBindings)
 
 	return portBindings
 }
 
 func (d *docker) createContainer(ctx context.Context, image string, ports NamedPorts, cfg *Options) (*container.ContainerCreateCreatedBody, error) { // nolint:lll
+	log.Println("createContainer ports", ports)
 	exposedPorts := d.exposedPorts(ports)
+	log.Println("createContainer exposedPorts", exposedPorts)
 	containerConfig := &container.Config{
 		Image:        image,
 		ExposedPorts: exposedPorts,
@@ -309,6 +315,7 @@ func (d *docker) createContainer(ctx context.Context, image string, ports NamedP
 		Mounts:       mounts,
 	}
 
+	log.Println("about to d.client.ContainerCreate with hostConfig.PortBindings", portBindings)
 	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, cfg.ContainerName)
 	if err == nil {
 		return &resp, nil
@@ -317,6 +324,7 @@ func (d *docker) createContainer(ctx context.Context, image string, ports NamedP
 	matches := duplicateContainerRegexp.FindStringSubmatch(err.Error())
 	if len(matches) == 2 {
 		d.log.Infow("duplicate container found, stopping", "container", matches[1])
+		log.Println("duplicate container found, stopping", "container", matches[1])
 
 		err = d.client.ContainerRemove(ctx, matches[1], types.ContainerRemoveOptions{
 			Force: true,
@@ -325,6 +333,7 @@ func (d *docker) createContainer(ctx context.Context, image string, ports NamedP
 			return nil, fmt.Errorf("can't remove existing container: %w", err)
 		}
 
+		log.Println("duplicate container found, starting another one")
 		resp, err = d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, cfg.ContainerName)
 	}
 
@@ -333,11 +342,17 @@ func (d *docker) createContainer(ctx context.Context, image string, ports NamedP
 
 func (d *docker) boundNamedPorts(json types.ContainerJSON, namedPorts NamedPorts) (NamedPorts, error) {
 	boundNamedPorts := make(NamedPorts)
+	log.Println("json", json)
+	log.Println("json.NetworkSettings.Ports", json.NetworkSettings.Ports)
+	log.Println("namedPorts", namedPorts)
 
 	for containerPort, bindings := range json.NetworkSettings.Ports {
+		log.Println("containerPort", containerPort)
 		if len(bindings) == 0 {
 			continue
 		}
+
+		log.Println("bindings[0].HostPort", bindings[0].HostPort)
 
 		hostPortNum, err := strconv.Atoi(bindings[0].HostPort)
 		if err != nil {
@@ -357,6 +372,7 @@ func (d *docker) boundNamedPorts(json types.ContainerJSON, namedPorts NamedPorts
 		}
 	}
 
+	log.Println("boundNamedPorts", boundNamedPorts)
 	return boundNamedPorts, nil
 }
 
