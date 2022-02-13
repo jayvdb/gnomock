@@ -62,4 +62,4 @@ jobs:
           apt-get update -q -y
           apt-get install -y curl jq netcat-openbsd
           curl gnomock:23042/start/mongo -d '{}'
-          nc -z gnomock $(curl gnomock:23042/start/mongo -d '{}' | jq .ports.default.port)
+          nc -vvv -z gnomock $(curl gnomock:23042/start/mongo -d '{}' | jq .ports.default.port)
