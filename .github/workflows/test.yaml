@@ -44,3 +44,22 @@ jobs:
           run: |
             curl 127.0.0.1:23042/start/mongo -d '{}'
             nc -z 127.0.0.1 $(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
+
+  test-github-action-in-container:
+    name: "[core] github action in container"
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bullseye
+    services:
+      gnomock:
+        image: orlangure/gnomock
+        options: -v /var/run/docker.sock:/var/run/docker.sock
+        ports:
+          - 23042:23042
+    steps:
+      - name: Test
+        run: |
+          apt-get update -q -y
+          apt-get install -y curl jq netcat-openbsd
+          curl gnomock:23042/start/mongo -d '{}'
+          nc -z gnomock $(curl gnomock:23042/start/mongo -d '{}' | jq .ports.default.port)
