@@ -123,6 +123,7 @@ func WithOptions(options *Options) Option {
 
 		o.Env = append(o.Env, options.Env...)
 		o.Debug = options.Debug
+		o.Privileged = options.Privileged
 		o.ContainerName = options.ContainerName
 	}
 }
