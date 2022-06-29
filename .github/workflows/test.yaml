@@ -8,6 +8,7 @@ on:
 jobs:
   lint:
     name: "[core] lint"
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.17
@@ -24,6 +25,7 @@ jobs:
         run: $(go env GOPATH)/bin/golangci-lint run --timeout 10m0s ./...
 
   test-core:
+    if: ${{ false }}
     name: "[core] gnomock, gnomockd"
     # strategy:
     #   matrix:
@@ -87,6 +89,7 @@ jobs:
 
   test-service-containers:
     name: "[core] service container"
+    if: ${{ false }}
     runs-on: ubuntu-latest
     services:
       gnomock:
