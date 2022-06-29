@@ -64,7 +64,7 @@ func (p *P) Options() []gnomock.Option {
 	p.setDefaults()
 
 	opts := []gnomock.Option{
-		gnomock.WithHealthCheck(healthcheck),
+		//gnomock.WithHealthCheck(healthcheck),
 	}
 
 	if p.DataPath != "" {

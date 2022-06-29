@@ -122,6 +122,10 @@ func WithOptions(options *Options) Option {
 		}
 
 		o.Env = append(o.Env, options.Env...)
+		//if options.healthcheck == nil {
+		//	o.healthcheck = nopHealthcheck
+		//}
+		//o.DisableAutoCleanup = options.DisableAutoCleanup
 		o.Debug = options.Debug
 		o.Privileged = options.Privileged
 		o.ContainerName = options.ContainerName
