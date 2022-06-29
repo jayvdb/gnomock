@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - gha-test
   pull_request:
 jobs:
   lint:
@@ -77,6 +78,12 @@ jobs:
         uses: gnomock/github-action@master
       - name: Test Gnomock connection
         run: curl localhost:23042/stop -d '{"id":"42"}'
+      - name: Test Gnomock mongo service
+        shell: bash
+        run: |
+          set -ex
+          MONGO_PORT=$(curl 127.0.0.1:23042/start/mongo -d '{}' | jq .ports.default.port)
+          nc -z 127.0.0.1 $MONGO_PORT
 
   test-service-containers:
     name: "[core] service container"
