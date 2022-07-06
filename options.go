@@ -124,6 +124,7 @@ func WithOptions(options *Options) Option {
 		o.Env = append(o.Env, options.Env...)
 		o.Debug = options.Debug
 		o.ContainerName = options.ContainerName
+		o.UseLocalImagesFirst = options.UseLocalImagesFirst
 	}
 }
 
